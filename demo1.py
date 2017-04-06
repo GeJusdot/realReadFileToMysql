@@ -126,6 +126,19 @@ if __name__ == '__main__':
     logging.info("starting...")
     fp = open(log.get('path'),'r')
     db = DB(db)
+    
+    '''
+    old_hour = time.strftime("%Y%m%d%H",time.localtime())
+    if os.path.isfile("offset"):
+        @fp1 = open("offset", 'r+')
+        offset = fp1.readline().strip() or 0
+    else:
+        offset = 0
+        os.system("touch offset")
+    fp.seek(int(offset))
+    '''
+
+
     while True:
         while threading.activeCount() < log.get('write_thread_nums', 1) + 1:
             lines=[]
@@ -150,6 +163,12 @@ if __name__ == '__main__':
 
                 if len(lines) == log.get('once_read_lines',1) or is_write:
                     t = threading.Thread(target=work, args=(db,lines))
+                    '''
+                    
+                    offset = fp.tell()
+                    fp1.seek(0)
+                    fp1.write(offset + "\n")
+                    '''
                     t.start()
                     logging.debug("current thread num is :%d" , threading.activeCount())
                     break
@@ -158,9 +177,12 @@ if __name__ == '__main__':
                 hour = time.strftime("%Y%m%d%H",time.localtime())
                 if hour > old_hour :
                     fp.close()
+                    fp1.seek(0)
+                    fp1.write(0)
                     os.rename(log.get('path'), log.get('path') + '.' + str(i))
                     os.system("touch " + log.get('path'))
                     fp = open(log.get('path'),'r')
+                    old_hour = hour
                 '''
 
         logging.warning("now thread nums not enough, max is :%d" , threading.activeCount())
